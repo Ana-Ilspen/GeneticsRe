@@ -4,9 +4,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import App from './App';
 
-const rootElement = document.getElementById('root');
-const root = ReactDOM.createRoot(rootElement);
-
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <DndProvider backend={HTML5Backend}>
     <App />
