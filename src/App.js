@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
-// --- 1. DATA GENERATOR (500+ Items) ---
-const generateMassiveLibrary = () => {
-  const lib = { "Prime Specimens": [
-    { id: 'h1', name: 'Neural Alpha' }, { id: 'a1', name: 'Apex Predator' }
-  ]};
+// --- GENE GENERATOR ---
+const generateLibrary = () => {
+  const lib = { "Prime Specimens": [{ id: 'h1', name: 'Human Baseline' }] };
   const pre = ["Xeno", "Void", "Neo", "Bio", "Cryo", "Aether", "Proto", "Cyber"];
   for (let i = 1; i <= 500; i++) {
     const cat = i % 2 === 0 ? "Synthetic Lab" : "Xeno-Classified";
@@ -14,9 +12,9 @@ const generateMassiveLibrary = () => {
   }
   return lib;
 };
-const GENE_DATABASE = generateMassiveLibrary();
+const GENE_DATABASE = generateLibrary();
 
-// --- 2. DRAGGABLE COMPONENT ---
+// --- DRAGGABLE ITEM ---
 const GeneBlock = ({ gene }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'GENE',
@@ -31,7 +29,7 @@ const GeneBlock = ({ gene }) => {
   );
 };
 
-// --- 3. MAIN LAB INTERFACE ---
+// --- MAIN LAB ---
 export default function App() {
   const [active, setActive] = useState([]);
   const [search, setSearch] = useState("");
@@ -42,25 +40,18 @@ export default function App() {
     collect: (monitor) => ({ isOver: !!monitor.isOver() })
   }));
 
-  const filtered = useMemo(() => {
-    const res = {};
-    Object.keys(GENE_DATABASE).forEach(cat => {
-      const match = GENE_DATABASE[cat].filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
-      if (match.length) res[cat] = match;
-    });
-    return res;
-  }, [search]);
-
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#000', color: '#0f0', fontFamily: 'monospace' }}>
       <div style={{ width: '280px', borderRight: '1px solid #040', padding: '15px', overflowY: 'auto' }}>
-        <h3 style={{borderBottom: '1px solid #0f0'}}>REGISTRY (500+)</h3>
+        <h3>REGISTRY (500+)</h3>
         <input style={{ width: '100%', background: '#111', color: '#0f0', border: '1px solid #0f0', marginBottom: '10px' }} 
-               placeholder="Search strands..." onChange={e => setSearch(e.target.value)} />
-        {Object.keys(filtered).map(cat => (
-          <details key={cat} open={search.length > 0} style={{marginBottom: '10px'}}>
+               placeholder="Search..." onChange={e => setSearch(e.target.value)} />
+        {Object.keys(GENE_DATABASE).map(cat => (
+          <details key={cat} open={search.length > 0}>
             <summary style={{cursor: 'pointer', color: '#fff'}}>{cat}</summary>
-            {filtered[cat].map(g => <GeneBlock key={g.id} gene={g} />)}
+            {GENE_DATABASE[cat].filter(g => g.name.toLowerCase().includes(search.toLowerCase())).map(g => (
+              <GeneBlock key={g.id} gene={g} />
+            ))}
           </details>
         ))}
       </div>
@@ -68,11 +59,9 @@ export default function App() {
         <h2>GENETIC LAB CANVAS</h2>
         <div style={{ width: '80%', height: '60%', border: '2px dashed #040', display: 'flex', flexWrap: 'wrap', gap: '10px', padding: '20px', overflowY: 'auto' }}>
           {active.map((g, i) => (
-            <div key={i} style={{ width: '40px', height: '40px', background: '#0f0', borderRadius: '50%', boxShadow: '0 0 10px #0f0' }} title={g.name} />
+            <div key={i} style={{ width: '40px', height: '40px', background: '#0f0', borderRadius: '50%', boxShadow: '0 0 10px #0f0' }} />
           ))}
-          {active.length === 0 && <p style={{opacity: 0.3}}>DRAG MATERIAL HERE</p>}
         </div>
-        <button onClick={() => setActive([])} style={{marginTop: '20px', background: 'none', color: '#f00', border: '1px solid #f00', cursor: 'pointer', padding: '5px 10px'}}>WIPE LAB</button>
       </div>
     </div>
   );
