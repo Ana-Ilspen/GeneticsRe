@@ -16,7 +16,7 @@ const generateMassiveLibrary = () => {
   };
   const prefixes = ["Xeno", "Proto", "Neo", "Cryo", "Aether", "Void", "Bio", "Cyber"];
   const suffixes = ["Strand", "Helix", "Node", "Link", "Core", "Catalyst"];
-  for (let i = 1; i <= 500; i++) {
+  for (let i = 1; i <= 1000; i++) {
     const cat = i % 2 === 0 ? "Synthetic Lab" : "Xeno-Class Classified";
     if (!library[cat]) library[cat] = [];
     library[cat].push({
@@ -133,3 +133,4 @@ const canvasStyle = { flex: 1, border: '1px dashed #004400', borderRadius: '20px
 const orbContainer = { width: '80px', textAlign: 'center' };
 const orbStyle = { width: '40px', height: '40px', borderRadius: '50%', background: 'radial-gradient(circle, #00ff00 0%, #001100 100%)', margin: '0 auto 5px', boxShadow: '0 0 10px #00ff00' };
 const logStyle = { flex: 1, fontSize: '10px', color: '#008800', overflowY: 'auto' };
+
