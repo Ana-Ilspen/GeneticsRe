@@ -1,0 +1,9 @@
+@keyframes pulse {
+  0% { box-shadow: 0 0 5px #00ff00; }
+  50% { box-shadow: 0 0 25px #00ff00; }
+  100% { box-shadow: 0 0 5px #00ff00; }
+}
+
+.dna-orb {
+  animation: pulse 2s infinite;
+}
