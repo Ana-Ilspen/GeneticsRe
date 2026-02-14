@@ -2,16 +2,16 @@ import React, { useState, useMemo } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
-// --- 1. THE 500+ SPECIES GENERATOR ---
+// --- 1. DATA ENGINE (Moved outside to prevent re-renders) ---
 const generateMassiveLibrary = () => {
   const library = {
     "Human Baseline": [
-      { id: 'h1', name: 'Neural Pathway Alpha', origin: 'Human', ability: 'Intelligence' },
-      { id: 'h2', name: 'Skeletal Density Max', origin: 'Human', ability: 'Durability' },
+      { id: 'h1', name: 'Neural Pathway Alpha', origin: 'Human' },
+      { id: 'h2', name: 'Skeletal Density Max', origin: 'Human' },
     ],
     "Apex Predators": [
-      { id: 'a1', name: 'Cheetah ACTN3 Sprint', origin: 'Cheetah', ability: 'Speed' },
-      { id: 'a2', name: 'Puma Vertical Leap', origin: 'Puma', ability: 'Leap' },
+      { id: 'a1', name: 'Cheetah ACTN3 Sprint', origin: 'Cheetah' },
+      { id: 'a2', name: 'Puma Vertical Leap', origin: 'Puma' },
     ]
   };
 
@@ -24,8 +24,7 @@ const generateMassiveLibrary = () => {
     library[cat].push({
       id: `gen_${i}`,
       name: `${prefixes[i % prefixes.length]} ${suffixes[i % suffixes.length]} #${1000 + i}`,
-      origin: i % 2 === 0 ? 'Laboratory' : 'Unknown',
-      ability: i % 4 === 0 ? 'Speed' : 'Durability'
+      origin: i % 2 === 0 ? 'Laboratory' : 'Unknown'
     });
   }
   return library;
@@ -33,106 +32,91 @@ const generateMassiveLibrary = () => {
 
 const GENE_DATABASE = generateMassiveLibrary();
 
-// --- 2. DRAGGABLE COMPONENT ---
+// --- 2. THE DRAGGABLE ITEM ---
 const GeneBlock = ({ gene }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'GENE',
     item: { gene },
-    collect: (monitor) => ({ isDragging: !!monitor.isDragging() })
-  }));
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }), [gene]); // Dependency array ensures it tracks the specific gene
 
   return (
     <div ref={drag} style={{
-      padding: '10px', margin: '6px 0', border: '1px solid #00ff00',
+      padding: '10px', margin: '5px 0', border: '1px solid #00ff00',
       backgroundColor: isDragging ? '#222' : '#0a0a0a', cursor: 'grab', 
-      color: '#00ff00', fontSize: '11px', textTransform: 'uppercase',
-      opacity: isDragging ? 0.5 : 1, transition: '0.2s'
+      color: '#00ff00', fontSize: '11px', opacity: isDragging ? 0.5 : 1
     }}>
-      {gene.name} <span style={{color: '#005500', fontSize: '9px'}}>[{gene.origin}]</span>
+      {gene.name}
     </div>
   );
 };
 
-// --- 3. THE INTERNAL INTERFACE ---
-const LabInterface = () => {
+// --- 3. THE LAB INTERFACE ---
+const LabUI = () => {
   const [activeGenes, setActiveGenes] = useState([]);
-  const [logs, setLogs] = useState(["[SYSTEM]: Lab Online."]);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredLibrary = useMemo(() => {
-    if (!searchTerm) return GENE_DATABASE;
-    const filtered = {};
-    Object.keys(GENE_DATABASE).forEach(cat => {
-      const matches = GENE_DATABASE[cat].filter(g => 
-        g.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      if (matches.length > 0) filtered[cat] = matches;
-    });
-    return filtered;
-  }, [searchTerm]);
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'GENE',
     drop: (item) => {
-      if (activeGenes.find(g => g.id === item.gene.id)) return;
-      setActiveGenes(prev => [...prev, item.gene]);
-      setLogs(prev => [`[SEQUENCE]: Integrated ${item.gene.name}.`, ...prev]);
+      setActiveGenes((prev) => {
+        if (prev.find(g => g.id === item.gene.id)) return prev;
+        return [...prev, item.gene];
+      });
     },
     collect: (monitor) => ({ isOver: !!monitor.isOver() })
   }));
 
+  const filtered = useMemo(() => {
+    if (!searchTerm) return GENE_DATABASE;
+    const result = {};
+    Object.keys(GENE_DATABASE).forEach(cat => {
+      const match = GENE_DATABASE[cat].filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (match.length) result[cat] = match;
+    });
+    return result;
+  }, [searchTerm]);
+
   return (
-    <div style={containerStyle}>
-      <div style={sidebarStyle}>
-        <h2 style={{borderBottom: '1px solid #00ff00'}}>GENE REGISTRY</h2>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#000', color: '#00ff00', fontFamily: 'monospace' }}>
+      {/* Sidebar */}
+      <div style={{ width: '300px', borderRight: '1px solid #004400', padding: '20px', overflowY: 'auto' }}>
+        <h3>GENE REGISTRY</h3>
         <input 
-          type="text" placeholder="Search 500+ strands..." 
-          style={inputStyle} onChange={(e) => setSearchTerm(e.target.value)} 
+          style={{ width: '100%', background: '#111', border: '1px solid #00ff00', color: '#00ff00', padding: '5px', marginBottom: '10px' }}
+          placeholder="Search 500+ strands..."
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <div style={{ overflowY: 'auto', flex: 1 }}>
-          {Object.keys(filteredLibrary).map(cat => (
-            <details key={cat} open={searchTerm.length > 0} style={{ marginBottom: '10px' }}>
-              <summary style={{ cursor: 'pointer', color: '#fff' }}>{cat}</summary>
-              {filteredLibrary[cat].map(g => <GeneBlock key={g.id} gene={g} />)}
-            </details>
-          ))}
-        </div>
+        {Object.keys(filtered).map(cat => (
+          <details key={cat} open style={{ marginBottom: '10px' }}>
+            <summary style={{ cursor: 'pointer', color: '#fff' }}>{cat}</summary>
+            {filtered[cat].map(g => <GeneBlock key={g.id} gene={g} />)}
+          </details>
+        ))}
       </div>
 
-      <div ref={drop} style={{ ...playgroundStyle, backgroundColor: isOver ? '#111' : '#000' }}>
-        <h1>LAB PLAYGROUND</h1>
-        <div style={canvasStyle}>
-          {activeGenes.length === 0 && <p style={{opacity: 0.3}}>[DRAG GENES HERE]</p>}
-          {activeGenes.map((g, i) => (
-            <div key={i} style={orbContainer}><div style={orbStyle}></div><p style={{fontSize: '10px'}}>{g.name}</p></div>
+      {/* Drop Zone */}
+      <div ref={drop} style={{ flex: 1, padding: '40px', backgroundColor: isOver ? '#051105' : '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <h2>LABORATORY CANVA</h2>
+        <div style={{ border: '2px dashed #004400', width: '80%', height: '60%', display: 'flex', flexWrap: 'wrap', padding: '20px', gap: '10px' }}>
+          {activeGenes.length === 0 && <p style={{ color: '#004400' }}>DROP GENETIC MATERIAL HERE</p>}
+          {activeGenes.map((g) => (
+            <div key={g.id} style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#00ff00', boxShadow: '0 0 15px #00ff00' }} title={g.name} />
           ))}
         </div>
-      </div>
-
-      <div style={dashboardStyle}>
-        <h3>SYSTEM LOGS</h3>
-        <div style={logStyle}>{logs.map((l, i) => <div key={i}>> {l}</div>)}</div>
+        <button onClick={() => setActiveGenes([])} style={{ marginTop: '20px', background: 'none', border: '1px solid #ff0000', color: '#ff0000', padding: '10px', cursor: 'pointer' }}>WIPE SEQUENCES</button>
       </div>
     </div>
   );
 };
 
-// --- 4. THE MAIN EXPORT (The Wrapper) ---
+// --- 4. THE EXPORT ---
 export default function App() {
   return (
     <DndProvider backend={HTML5Backend}>
-      <LabInterface />
+      <LabUI />
     </DndProvider>
   );
 }
-
-// STYLES
-const containerStyle = { display: 'flex', height: '100vh', backgroundColor: '#000', color: '#00ff00', fontFamily: 'monospace', overflow: 'hidden' };
-const sidebarStyle = { width: '300px', borderRight: '1px solid #004400', padding: '20px', display: 'flex', flexDirection: 'column', background: '#050505' };
-const playgroundStyle = { flex: 1, padding: '30px', display: 'flex', flexDirection: 'column' };
-const dashboardStyle = { width: '300px', borderLeft: '1px solid #004400', padding: '20px', background: '#050505' };
-const inputStyle = { width: '100%', background: '#111', border: '1px solid #00ff00', color: '#00ff00', padding: '8px', marginBottom: '15px', fontFamily: 'monospace' };
-const canvasStyle = { flex: 1, border: '1px dashed #004400', borderRadius: '20px', marginTop: '20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '20px', overflowY: 'auto' };
-const orbContainer = { width: '80px', textAlign: 'center' };
-const orbStyle = { width: '40px', height: '40px', borderRadius: '50%', background: 'radial-gradient(circle, #00ff00 0%, #001100 100%)', margin: '0 auto 5px', boxShadow: '0 0 10px #00ff00' };
-const logStyle = { flex: 1, fontSize: '10px', color: '#008800', overflowY: 'auto' };
