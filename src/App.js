@@ -3,8 +3,8 @@ import { useDrag, useDrop } from 'react-dnd';
 
 // --- 1. DATA GENERATOR (500+ Items) ---
 const generateMassiveLibrary = () => {
-  const lib = { "Human/Apex": [
-    { id: 'h1', name: 'Neural Alpha' }, { id: 'a1', name: 'Cheetah ACTN3' }
+  const lib = { "Prime Specimens": [
+    { id: 'h1', name: 'Neural Alpha' }, { id: 'a1', name: 'Apex Predator' }
   ]};
   const pre = ["Xeno", "Void", "Neo", "Bio", "Cryo", "Aether", "Proto", "Cyber"];
   for (let i = 1; i <= 500; i++) {
@@ -56,9 +56,9 @@ export default function App() {
       <div style={{ width: '280px', borderRight: '1px solid #040', padding: '15px', overflowY: 'auto' }}>
         <h3 style={{borderBottom: '1px solid #0f0'}}>REGISTRY (500+)</h3>
         <input style={{ width: '100%', background: '#111', color: '#0f0', border: '1px solid #0f0', marginBottom: '10px' }} 
-               placeholder="Filter..." onChange={e => setSearch(e.target.value)} />
+               placeholder="Search strands..." onChange={e => setSearch(e.target.value)} />
         {Object.keys(filtered).map(cat => (
-          <details key={cat} open style={{marginBottom: '10px'}}>
+          <details key={cat} open={search.length > 0} style={{marginBottom: '10px'}}>
             <summary style={{cursor: 'pointer', color: '#fff'}}>{cat}</summary>
             {filtered[cat].map(g => <GeneBlock key={g.id} gene={g} />)}
           </details>
